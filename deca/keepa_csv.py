@@ -50,3 +50,20 @@ def load_keepa_csv(path: str | Path) -> dict[str, PackageSpec]:
                 weight_kg=(grams / 1000.0) if grams is not None else None,
             )
     return out
+
+
+KEEP_CSV_DIR = Path(__file__).resolve().parents[1] / "data" / "keepa"
+
+
+def find_keepa_csv(explicit: str | Path | None = None) -> Path | None:
+    """手指定が無ければ data/keepa の最新 CSV。"""
+    if explicit:
+        return Path(explicit)
+    if not KEEP_CSV_DIR.is_dir():
+        return None
+    files = sorted(
+        KEEP_CSV_DIR.glob("*.csv"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    return files[0] if files else None

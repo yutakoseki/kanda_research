@@ -86,7 +86,7 @@ class KeepaCsvTest(unittest.TestCase):
     def test_package_only(self):
         from pathlib import Path
 
-        from deca.keepa_csv import load_keepa_csv
+        from deca.keepa_csv import find_keepa_csv, load_keepa_csv
         from deca.service import research
 
         path = Path(__file__).parent / "keepa_sample.csv"
@@ -95,6 +95,7 @@ class KeepaCsvTest(unittest.TestCase):
         self.assertEqual(spec.width_cm, 154)
         self.assertEqual(spec.height_cm, 49)
         self.assertEqual(spec.weight_kg, 45)
+        self.assertEqual(find_keepa_csv(path), path)
 
         r = research(
             "B0CZR85NB2",

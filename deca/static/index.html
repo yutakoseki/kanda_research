@@ -79,7 +79,7 @@
 
       <label for="csv">Keepa CSV（任意・梱包サイズと重量だけ使う）</label>
       <input id="csv" name="csv" type="file" accept=".csv,text/csv" />
-      <div class="meta" id="csv-status">売価は使いません。古いCSVでも寸法の参考にできます。</div>
+      <div class="meta" id="csv-status">data/keepa に置いた CSV を選べます。売価は使いません。</div>
 
       <div class="row">
         <div>
@@ -189,7 +189,7 @@
     document.getElementById("csv").addEventListener("change", async (e) => {
       const file = e.target.files[0];
       const status = document.getElementById("csv-status");
-      if (!file) { keepaMap = null; status.textContent = "売価は使いません。古いCSVでも寸法の参考にできます。"; return; }
+      if (!file) { keepaMap = null; status.textContent = "data/keepa に置いた CSV を選べます。売価は使いません。"; return; }
       keepaMap = parseKeepaCsv(await file.text());
       status.textContent = `${keepaMap.size}件の梱包サイズ・重量を読みました（売価は無視）。`;
     });

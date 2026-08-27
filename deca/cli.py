@@ -12,6 +12,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from deca.amazon import AmazonListing, parse_html
+from deca.keepa_csv import find_keepa_csv
 from deca.margin import DEFAULT_RATE, Inputs, quote
 from deca.service import research
 
@@ -108,9 +109,13 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--yuan", type=float, help="確認済み仕入（元）。無いときは上限だけ出す")
     p.add_argument("--rate", type=float, default=DEFAULT_RATE)
     p.add_argument("--domestic", type=int, help="国内送料を手で上書き（円）")
-    p.add_argument("--csv", help="Keepa Product Finder CSV（梱包サイズ・重量のみ使用）")
+    p.add_argument(
+        "--csv",
+        help="Keepa Product Finder CSV。省略時は data/keepa の最新ファイル",
+    )
     p.add_argument("--json", action="store_true")
     args = p.parse_args(argv)
+    csv_path = find_keepa_csv(args.csv)
 
     if args.html:
         listing = parse_html(Path(args.html).read_text(encoding="utf-8"), args.url or "")
@@ -124,7 +129,7 @@ def main(argv: list[str] | None = None) -> int:
             height=args.height or listing.height_cm,
             weight=args.weight or listing.weight_kg,
             domestic=args.domestic,
-            csv_path=args.csv,
+            csv_path=csv_path,
         )
         result["listing"] = listing.__dict__
     else:
@@ -138,7 +143,7 @@ def main(argv: list[str] | None = None) -> int:
             height=args.height,
             weight=args.weight,
             domestic=args.domestic,
-            csv_path=args.csv,
+            csv_path=csv_path,
         )
 
     if args.json:

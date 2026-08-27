@@ -22,8 +22,11 @@ python -m deca.web
 
 コマンドでも可:
 
+Keepa CSV は `data/keepa/` に置く。省略時はそこの最新 CSV を使う。
+
 ```text
-python -m deca.cli "AMAZON_URL" --csv "KeepaExport.csv"
+python -m deca.cli "AMAZON_URL"
+python -m deca.cli "AMAZON_URL" --csv data/keepa/KeepaExport.csv
 ```
 
 仕入（元）がバイヤー確認済みなら:
