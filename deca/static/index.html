@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>デカ重リサーチ</title>
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --card: #fff;
+      --ink: #1c1917;
+      --muted: #78716c;
+      --line: #e7e5e4;
+      --go: #166534;
+      --nogo: #991b1b;
+      --accent: #1d4ed8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Hiragino Sans", Meiryo, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.5;
+    }
+    main { max-width: 760px; margin: 32px auto; padding: 0 16px 64px; }
+    h1 { font-size: 1.4rem; margin: 0 0 8px; }
+    p.lead { color: var(--muted); margin: 0 0 24px; }
+    form, .result {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    label { display: block; font-size: 0.85rem; font-weight: 600; margin: 12px 0 4px; }
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 600px) { .row { grid-template-columns: 1fr; } }
+    details { margin-top: 16px; color: var(--muted); }
+    button {
+      margin-top: 16px;
+      background: var(--accent);
+      color: #fff;
+      border: 0;
+      border-radius: 8px;
+      padding: 12px 18px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:disabled { opacity: 0.6; cursor: wait; }
+    .result { margin-top: 20px; display: none; }
+    .warn { background: #fff7ed; border-radius: 8px; padding: 10px 12px; margin: 8px 0; }
+    .err { background: #fef2f2; border-radius: 8px; padding: 10px 12px; margin: 8px 0; }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px;
+      margin-top: 12px;
+    }
+    .go { color: var(--go); font-weight: 700; }
+    .nogo { color: var(--nogo); font-weight: 700; }
+    .big { font-size: 1.35rem; margin: 4px 0 8px; }
+    .meta { font-size: 0.9rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>デカ重リサーチ</h1>
+    <p class="lead">Amazonの現在売価と、Keepa CSVの梱包サイズ・重量から、利益率20%の仕入上限（元）を出します。CSVの売価は使いません。Alibabaの価格も自動では使いません。</p>
+    <form id="form">
+      <label for="url">Amazon URL または ASIN</label>
+      <input id="url" name="url" type="text" placeholder="https://www.amazon.co.jp/dp/... または B0XXXXXXXX" required />
+
+      <label for="csv">Keepa CSV（任意・梱包サイズと重量だけ使う）</label>
+      <input id="csv" name="csv" type="file" accept=".csv,text/csv" />
+      <div class="meta" id="csv-status">売価は使いません。古いCSVでも寸法の参考にできます。</div>
+
+      <div class="row">
+        <div>
+          <label for="yuan">確認済み仕入（元）任意</label>
+          <input id="yuan" name="yuan" type="number" step="0.1" placeholder="空なら上限だけ出す" />
+        </div>
+        <div>
+          <label for="rate">レート（円/元）</label>
+          <input id="rate" name="rate" type="number" step="0.1" value="22" />
+        </div>
+      </div>
+
+      <details>
+        <summary>Amazonから取れないとき手入力</summary>
+        <div class="row">
+          <div>
+            <label for="price">売価（円）</label>
+            <input id="price" name="price" type="number" step="1" />
+          </div>
+          <div>
+            <label for="weight">重量（kg）</label>
+            <input id="weight" name="weight" type="number" step="0.1" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="length">梱包 縦（cm）</label>
+            <input id="length" name="length" type="number" step="0.1" />
+          </div>
+          <div>
+            <label for="width">梱包 横（cm）</label>
+            <input id="width" name="width" type="number" step="0.1" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="height">梱包 高（cm）</label>
+            <input id="height" name="height" type="number" step="0.1" />
+          </div>
+          <div>
+            <label for="domestic">国内送料上書き（円）</label>
+            <input id="domestic" name="domestic" type="number" step="1" />
+          </div>
+        </div>
+      </details>
+
+      <button type="submit" id="btn">計算する</button>
+    </form>
+    <div class="result" id="out"></div>
+  </main>
+  <script>
+    let keepaMap = null;
+
+    function parseKeepaCsv(text) {
+      const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).filter(l => l.length);
+      if (!lines.length) return new Map();
+      const rows = [];
+      for (const line of lines) {
+        const cells = [];
+        let cur = "", inQ = false;
+        for (let i = 0; i < line.length; i++) {
+          const c = line[i];
+          if (inQ) {
+            if (c === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+            else if (c === '"') inQ = false;
+            else cur += c;
+          } else if (c === '"') inQ = true;
+          else if (c === ",") { cells.push(cur); cur = ""; }
+          else cur += c;
+        }
+        cells.push(cur);
+        rows.push(cells);
+      }
+      const header = rows[0];
+      const idx = name => header.indexOf(name);
+      const iAsin = idx("ASIN");
+      const iL = idx("Package: Length (cm)");
+      const iW = idx("Package: Width (cm)");
+      const iH = idx("Package: Height (cm)");
+      const iG = idx("Package: Weight (g)");
+      const map = new Map();
+      const num = v => {
+        if (v == null) return null;
+        const s = String(v).trim().replace(/,/g, "");
+        if (!s || s === "-" || s.toUpperCase() === "N/A") return null;
+        const n = Number(s);
+        return Number.isFinite(n) ? n : null;
+      };
+      for (const r of rows.slice(1)) {
+        const asin = (r[iAsin] || "").trim().toUpperCase();
+        const L = num(r[iL]), W = num(r[iW]), H = num(r[iH]);
+        if (asin.length !== 10 || L == null || W == null || H == null) continue;
+        const g = num(r[iG]);
+        map.set(asin, { length: L, width: W, height: H, weight: g == null ? null : g / 1000 });
+      }
+      return map;
+    }
+
+    function extractAsin(s) {
+      s = (s || "").trim();
+      if (/^[A-Z0-9]{10}$/i.test(s)) return s.toUpperCase();
+      let m = s.match(/\/dp\/([A-Z0-9]{10})/i) || s.match(/\/gp\/product\/([A-Z0-9]{10})/i)
+        || s.match(/[?&]asin=([A-Z0-9]{10})/i) || s.match(/#!product\/\d-([A-Z0-9]{10})/i);
+      return m ? m[1].toUpperCase() : null;
+    }
+
+    document.getElementById("csv").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      const status = document.getElementById("csv-status");
+      if (!file) { keepaMap = null; status.textContent = "売価は使いません。古いCSVでも寸法の参考にできます。"; return; }
+      keepaMap = parseKeepaCsv(await file.text());
+      status.textContent = `${keepaMap.size}件の梱包サイズ・重量を読みました（売価は無視）。`;
+    });
+
+    const yen = v => v == null ? "—" : Math.round(v).toLocaleString("ja-JP") + "円";
+    const yuan = v => v == null ? "—" : Number(v).toFixed(1) + " 元";
+    const pct = v => {
+      if (v == null) return "";
+      const ok = v >= 0.20;
+      return `<span class="${ok ? "go" : "nogo"}">${(v * 100).toFixed(1)}% ${ok ? "GO" : "NO GO"}</span>`;
+    };
+
+    document.getElementById("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById("btn");
+      const out = document.getElementById("out");
+      btn.disabled = true;
+      out.style.display = "block";
+      out.innerHTML = "Amazonを取得しています…";
+      const fd = new FormData(e.target);
+      const payload = {};
+      for (const [k, v] of fd.entries()) {
+        if (k === "csv") continue;
+        payload[k] = v;
+      }
+      const asin = extractAsin(payload.url || "");
+      const spec = asin && keepaMap ? keepaMap.get(asin) : null;
+      const manualDims = payload.length && payload.width && payload.height;
+      if (spec && !manualDims) {
+        payload.keepa_length = spec.length;
+        payload.keepa_width = spec.width;
+        payload.keepa_height = spec.height;
+        if (spec.weight != null && !payload.weight) payload.keepa_weight = spec.weight;
+      }
+      try {
+        const res = await fetch("/api/research", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        out.innerHTML = render(data);
+      } catch (err) {
+        out.innerHTML = `<div class="err">通信エラー: ${err}</div>`;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    function render(data) {
+      const bits = [];
+      if (data.fetch_error) bits.push(`<div class="warn">Amazon取得失敗: ${esc(data.fetch_error)}。下の手入力で補って再計算してください。</div>`);
+      const L = data.listing || {};
+      if (L.title) bits.push(`<h2>${esc(L.title)}</h2>`);
+      if (L.asin) bits.push(`<div class="meta">ASIN ${esc(L.asin)}</div>`);
+      const src = (data.inputs && data.inputs.package_source) || data.package_source || L.dimension_source;
+      if (src) bits.push(`<div class="meta">寸法出典: ${esc(src)}</div>`);
+      (data.notes || []).forEach(w => bits.push(`<div class="warn">${esc(w)}</div>`));
+      (L.warnings || []).forEach(w => bits.push(`<div class="warn">${esc(w)}</div>`));
+      if (data.missing && data.missing.length) {
+        bits.push(`<div class="err">不足: ${data.missing.map(esc).join("、")}。手入力欄を開いて入れてください。</div>`);
+        return bits.join("");
+      }
+      const q = data.quote;
+      const inp = data.inputs;
+      bits.push(`<p>売価 ${yen(inp.selling_yen)} ／ ${inp.length_cm}×${inp.width_cm}×${inp.height_cm}cm ／ 三辺 ${Math.round(q.girth_cm)}cm（${esc(q.domestic_band)}） ／ ${q.cbm.toFixed(4)} m3</p>`);
+      for (const s of q.scenarios) {
+        bits.push(`<div class="card">
+          <div class="meta">${esc(s.label)}</div>
+          <div>バイヤーへ渡す上限（利益率20%）</div>
+          <div class="big">${yuan(s.max_yuan_20)}</div>
+          <div class="meta">30%なら ${yuan(s.max_yuan_30)} ／ 国内 ${yen(s.domestic)} ／ 国際 ${yen(s.intl)} ／ 手数料 ${yen(s.amazon_fee)}</div>
+          ${s.margin != null ? `<div style="margin-top:8px">この仕入の粗利 ${yen(s.gross)} ／ 利益率 ${pct(s.margin)}</div>` : `<div class="meta" style="margin-top:8px">仕入（元）を入れると利益率が出ます</div>`}
+          ${(s.notes || []).map(n => `<div class="warn">${esc(n)}</div>`).join("")}
+        </div>`);
+      }
+      bits.push(`<p class="meta">同価格前提。Alibabaの表示価格は使わず、上の上限元をバイヤーに確認してください。</p>`);
+      return bits.join("");
+    }
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+.Python
+.env
+*.html
+!deca/static/index.html
+KeepaExport*.csv
+deca/data/
