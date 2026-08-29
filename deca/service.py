@@ -6,7 +6,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from deca.amazon import AmazonListing, amazon_url, extract_asin, fetch_html, parse_html
-from deca.keepa_csv import load_keepa_csv
+from deca.keepa_csv import find_keepa_csv, lookup_keepa_package, merge_keepa_specs
 from deca.margin import DEFAULT_RATE, Inputs, quote
 
 
@@ -22,6 +22,7 @@ def research(
     weight: float | None = None,
     domestic: int | None = None,
     csv_path: str | Path | None = None,
+    keepa_csv_text: str | None = None,
     keepa_length: float | None = None,
     keepa_width: float | None = None,
     keepa_height: float | None = None,
@@ -31,7 +32,8 @@ def research(
     listing: AmazonListing | None = None
     fetch_error: str | None = None
     fetch_url = amazon_url(url) if url else None
-    asin = extract_asin(url) if url else None
+    url_asin = extract_asin(url) if url else None
+    asin = url_asin
 
     if fetch and fetch_url:
         try:
@@ -40,12 +42,8 @@ def research(
         except Exception as e:
             fetch_error = str(e)
 
-    keepa = None
-    if csv_path:
-        try:
-            keepa = load_keepa_csv(csv_path).get((asin or "").upper())
-        except FileNotFoundError:
-            keepa = None
+    keepa_specs, keepa_meta = merge_keepa_specs(csv_path, keepa_csv_text)
+    keepa = lookup_keepa_package(keepa_specs, url_asin, asin)
     if keepa and keepa_length is None:
         keepa_length = keepa.length_cm
         keepa_width = keepa.width_cm
@@ -79,7 +77,19 @@ def research(
 
     extra_notes: list[str] = []
     if dim_source == "Keepa CSV 梱包サイズ":
-        extra_notes.append("梱包サイズ・重量は Keepa CSV。売価は Amazon の現在値。")
+        src = keepa_meta.get("path") or ("アップロード CSV" if keepa_meta.get("uploaded") else "Keepa CSV")
+        extra_notes.append(f"梱包サイズ・重量は {src}。売価は Amazon の現在値。")
+    elif length is None or width is None or height is None:
+        if keepa_meta["row_count"] == 0:
+            extra_notes.append(
+                "Keepa CSV が読み込まれていません。"
+                "data/keepa/ に CSV を置くか、上のファイル選択で CSV を指定してください。"
+            )
+        elif keepa is None:
+            lookup = asin or url_asin or "?"
+            extra_notes.append(
+                f"ASIN {lookup} が Keepa CSV に見つかりません（{keepa_meta['row_count']}件読込）。"
+            )
     if listing and listing.warnings:
         extra_notes.extend(listing.warnings)
 
@@ -90,6 +100,7 @@ def research(
         "listing": asdict(listing) if listing else None,
         "asin": asin,
         "package_source": dim_source,
+        "keepa_csv": keepa_meta,
         "quote": None,
         "notes": extra_notes,
     }

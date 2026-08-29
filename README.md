@@ -28,7 +28,7 @@ Product Finder でエクスポートした `KeepaExport-*.csv` をそのまま�
 ## 使い方（画面）
 
 ```text
-python -m deca.web
+python3 -m deca.web
 ```
 
 ブラウザで http://127.0.0.1:8765/ が開きます。

@@ -25,6 +25,7 @@ class AmazonListing:
     height_cm: float | None
     weight_kg: float | None
     dimension_source: str | None
+    image_url: str | None
     warnings: list[str]
 
 
@@ -127,6 +128,7 @@ def parse_html(html: str, url: str) -> AmazonListing:
     if asin_m:
         asin = asin_m.group(1)
 
+    image_url = None
     for prod in _json_ld_products(html):
         title = title or prod.get("name")
         offers = prod.get("offers") or {}
@@ -137,6 +139,24 @@ def parse_html(html: str, url: str) -> AmazonListing:
                 price = float(str(offers["price"]).replace(",", ""))
             except ValueError:
                 pass
+        img = prod.get("image")
+        if isinstance(img, list) and img:
+            image_url = image_url or img[0]
+        elif isinstance(img, str):
+            image_url = image_url or img
+
+    if image_url is None:
+        m = re.search(r'property="og:image"\s+content="([^"]+)"', html, re.I)
+        if m:
+            image_url = unescape(m.group(1))
+    if image_url is None:
+        m = re.search(r'id="landingImage"[^>]*(?:data-old-hires|src)="([^"]+)"', html, re.I)
+        if m:
+            image_url = unescape(m.group(1))
+    if image_url is None:
+        m = re.search(r'"hiRes":"([^"]+)"', html)
+        if m:
+            image_url = m.group(1).encode().decode("unicode_escape")
 
     asin_input = re.search(r'id="ASIN"[^>]*value="([A-Z0-9]{10})"', html)
     if asin_input:
@@ -238,6 +258,7 @@ def parse_html(html: str, url: str) -> AmazonListing:
         height_cm=h,
         weight_kg=weight,
         dimension_source=dim_src,
+        image_url=image_url,
         warnings=warnings,
     )
 

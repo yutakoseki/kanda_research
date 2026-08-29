@@ -6,135 +6,412 @@
   <title>デカ重リサーチ</title>
   <style>
     :root {
-      --bg: #f4f1ea;
-      --card: #fff;
-      --ink: #1c1917;
-      --muted: #78716c;
-      --line: #e7e5e4;
-      --go: #166534;
-      --nogo: #991b1b;
-      --accent: #1d4ed8;
+      --bg: #eef1f5;
+      --card: #ffffff;
+      --ink: #1e293b;
+      --muted: #64748b;
+      --muted2: #94a3b8;
+      --border: #dbe1e9;
+      --go: #157347;
+      --go-bg: #f0fdf5;
+      --go-border: #34a866;
+      --nogo: #b42318;
+      --nogo-bg: #fef2f2;
+      --nogo-border: #e57373;
+      --primary: #1f3b57;
+      --primary-dark: #152a3f;
+      --primary-soft: #e8edf3;
+      --shadow-sm: 0 1px 2px rgba(16, 24, 40, .05);
+      --shadow-md: 0 2px 10px rgba(16, 24, 40, .06);
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: "Segoe UI", "Hiragino Sans", Meiryo, sans-serif;
+      font-family: "Hiragino Sans", "Segoe UI", "Noto Sans JP", Meiryo, sans-serif;
       background: var(--bg);
       color: var(--ink);
-      line-height: 1.5;
+      line-height: 1.55;
     }
-    main { max-width: 760px; margin: 32px auto; padding: 0 16px 64px; }
-    h1 { font-size: 1.4rem; margin: 0 0 8px; }
-    p.lead { color: var(--muted); margin: 0 0 24px; }
-    form, .result {
+    main { max-width: 1120px; margin: 24px auto; padding: 0 16px 64px; }
+
+    form, .result, .card-box {
       background: var(--card);
-      border: 1px solid var(--line);
+      border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 20px;
+      padding: 18px;
+      box-shadow: var(--shadow-md);
     }
-    label { display: block; font-size: 0.85rem; font-weight: 600; margin: 12px 0 4px; }
-    input {
+    label { display: block; font-size: 0.76rem; font-weight: 700; margin: 12px 0 5px; color: var(--muted); letter-spacing: 0.01em; }
+    input, textarea {
       width: 100%;
-      padding: 10px 12px;
-      border: 1px solid var(--line);
+      padding: 9px 11px;
+      border: 1px solid var(--border);
       border-radius: 8px;
-      font-size: 1rem;
+      font-size: 0.92rem;
+      font-family: inherit;
+      background: #fff;
+      color: var(--ink);
+      transition: border-color .15s, box-shadow .15s;
+    }
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-soft);
     }
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     @media (max-width: 600px) { .row { grid-template-columns: 1fr; } }
-    details { margin-top: 16px; color: var(--muted); }
+
     button {
-      margin-top: 16px;
-      background: var(--accent);
+      background: var(--primary);
       color: #fff;
       border: 0;
       border-radius: 8px;
-      padding: 12px 18px;
-      font-size: 1rem;
+      padding: 10px 18px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: background .15s;
+    }
+    button:hover { background: var(--primary-dark); }
+    button:active { transform: translateY(1px); }
+    button:disabled { opacity: 0.55; cursor: wait; }
+    .btn-primary { margin-top: 16px; }
+    .btn-outline {
+      background: #fff;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+      box-shadow: none;
+      font-size: 0.78rem;
+      padding: 6px 12px;
+    }
+    .btn-outline:hover { background: var(--primary-soft); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      box-shadow: none;
+      font-size: 0.85rem;
+      padding: 4px 9px;
+      font-weight: 400;
+    }
+    .btn-ghost:hover { background: #f4f5f7; color: var(--nogo); border-color: var(--nogo-border); }
+
+    /* Keepa CSV ファイル選択 */
+    .file-field { display: flex; align-items: center; gap: 10px; margin-top: 5px; flex-wrap: wrap; }
+    .file-btn {
+      position: relative;
+      overflow: hidden;
+      background: #fff;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: none;
+      white-space: nowrap;
+    }
+    .file-btn:hover { background: var(--primary-soft); }
+    .file-btn input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
       cursor: pointer;
     }
-    button:disabled { opacity: 0.6; cursor: wait; }
-    .result { margin-top: 20px; display: none; }
-    .warn { background: #fff7ed; border-radius: 8px; padding: 10px 12px; margin: 8px 0; }
-    .err { background: #fef2f2; border-radius: 8px; padding: 10px 12px; margin: 8px 0; }
-    .card {
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 14px;
-      margin-top: 12px;
-    }
+    .file-name { font-size: 0.82rem; color: var(--muted); overflow-wrap: anywhere; }
+
+    .result { margin-top: 18px; display: none; }
+    .warn { background: #fffaf0; color: #92580c; border: 1px solid #f3d99b; border-radius: 8px; padding: 9px 12px; margin: 8px 0; font-size: 0.85rem; }
+    .err { background: var(--nogo-bg); color: var(--nogo); border: 1px solid var(--nogo-border); border-radius: 8px; padding: 9px 12px; margin: 8px 0; font-size: 0.86rem; }
     .go { color: var(--go); font-weight: 700; }
     .nogo { color: var(--nogo); font-weight: 700; }
-    .big { font-size: 1.35rem; margin: 4px 0 8px; }
-    .meta { font-size: 0.9rem; color: var(--muted); }
+    .meta { font-size: 0.83rem; color: var(--muted); }
+
+    .sheet-title { font-size: 1.02rem; font-weight: 800; margin: 0 0 6px; }
+    .sheet-title a { color: var(--primary); text-decoration: none; }
+    .sheet-title a:hover { text-decoration: underline; }
+
+    .top-panel {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      background: #fbfbfc;
+      margin-bottom: 14px;
+    }
+    .photo-box {
+      width: 240px;
+      height: 240px;
+      flex: 0 0 240px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      color: var(--muted2);
+      font-size: 0.8rem;
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      position: relative;
+      text-decoration: none;
+    }
+    @media (max-width: 560px) { .photo-box { width: 100%; height: 220px; flex-basis: 100%; } }
+    .photo-box img { width: 100%; height: 100%; object-fit: contain; }
+    .photo-box .photo-hint {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      background: rgba(31, 59, 87, .82);
+      color: #fff;
+      font-size: 0.72rem;
+      text-align: center;
+      padding: 5px 4px;
+      opacity: 0;
+      transition: opacity .15s;
+    }
+    .photo-box:hover .photo-hint { opacity: 1; }
+
+    .edit-grid {
+      flex: 1 1 380px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      align-content: start;
+    }
+    .edit-cell {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .edit-cell .lbl {
+      font-size: 0.67rem;
+      font-weight: 700;
+      color: var(--primary);
+      background: var(--primary-soft);
+      padding: 4px 8px;
+      letter-spacing: 0.01em;
+    }
+    .edit-cell.readonly .lbl { color: var(--muted); background: #f2f3f5; }
+    .edit-cell input {
+      width: 100%;
+      border: 0;
+      border-radius: 0;
+      padding: 7px 8px;
+      font-size: 0.88rem;
+      text-align: right;
+      box-shadow: none !important;
+    }
+
+    .section {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      background: #fbfbfc;
+      margin-bottom: 14px;
+    }
+    .section h3 { font-size: 0.82rem; font-weight: 700; color: var(--muted); margin: 0 0 10px; text-transform: uppercase; letter-spacing: 0.03em; }
+    .url-rows { display: flex; flex-direction: column; gap: 8px; }
+    .url-row { display: flex; align-items: center; gap: 8px; }
+    .url-row input { flex: 1 1 auto; }
+    .url-row .url-open {
+      font-size: 0.78rem;
+      color: var(--primary);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      white-space: nowrap;
+      visibility: hidden;
+    }
+    .url-row .url-open:hover { background: var(--primary-soft); }
+    .url-row .url-remove {
+      flex: 0 0 auto;
+      background: transparent;
+      color: var(--muted2);
+      border: 0;
+      box-shadow: none;
+      font-size: 1rem;
+      padding: 4px 8px;
+      line-height: 1;
+    }
+    .url-row .url-remove:hover { color: var(--nogo); background: transparent; }
+    .save-status { font-size: 0.74rem; color: var(--go); opacity: 0; transition: opacity .3s; margin-left: 8px; }
+    .save-status.show { opacity: 1; }
+    .btn-register {
+      background: var(--primary);
+      margin-top: 0;
+      padding: 14px 30px;
+      font-size: 1rem;
+      font-weight: 800;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(31, 59, 87, .35);
+    }
+    .btn-register:hover { background: var(--primary-dark); }
+    .action-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+
+    .registry-card { margin-top: 16px; }
+    .registry-card h3 { font-size: 0.82rem; font-weight: 700; color: var(--muted); margin: 0 0 10px; text-transform: uppercase; letter-spacing: 0.03em; }
+    .registry-list { display: flex; flex-direction: column; gap: 6px; max-height: 340px; overflow-y: auto; }
+    .registry-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      background: #fff;
+      transition: background .12s, border-color .12s;
+    }
+    .registry-item:hover { background: var(--primary-soft); border-color: var(--primary); }
+    .registry-item .ri-photo {
+      width: 40px; height: 40px; flex: 0 0 40px;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: #fff; display: flex; align-items: center; justify-content: center;
+      overflow: hidden; color: var(--muted2); font-size: 0.6rem;
+    }
+    .registry-item .ri-photo img { width: 100%; height: 100%; object-fit: contain; }
+    .registry-item .ri-title { font-size: 0.84rem; font-weight: 600; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .registry-item .ri-meta { font-size: 0.74rem; color: var(--muted); white-space: nowrap; }
+    .registry-empty { font-size: 0.84rem; color: var(--muted2); padding: 6px 2px; }
+
+    .scenario-block {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 14px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    .scenario-title {
+      background: var(--primary);
+      color: #fff;
+      font-weight: 700;
+      padding: 9px 14px;
+      font-size: 0.88rem;
+    }
+    .sheet-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      background: var(--border);
+      gap: 1px;
+    }
+    .sheet-grid .cell {
+      padding: 8px 10px;
+      background: #fff;
+      cursor: pointer;
+      transition: background .12s;
+      position: relative;
+    }
+    .sheet-grid .cell:hover { background: var(--primary-soft); }
+    .sheet-grid .cell:hover::after {
+      content: "⧉";
+      position: absolute;
+      top: 4px; right: 6px;
+      font-size: 0.68rem;
+      color: var(--primary);
+    }
+    .sheet-grid .cell .lbl { font-size: 0.67rem; color: var(--muted); margin-bottom: 3px; }
+    .sheet-grid .cell .val { font-size: 0.9rem; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .sheet-grid .cell.go { background: var(--go-bg); }
+    .sheet-grid .cell.go:hover { background: #e1f8ea; }
+    .sheet-grid .cell.go .val { color: var(--go); }
+    .sheet-grid .cell.nogo { background: var(--nogo-bg); }
+    .sheet-grid .cell.nogo:hover { background: #fde3e2; }
+    .sheet-grid .cell.nogo .val { color: var(--nogo); }
+    .sheet-grid .cell.margin-cell { grid-column: span 2; }
+    .sheet-grid .cell.margin-cell .val { font-size: 0.84rem; }
+
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      padding: 12px;
+      background: #fafafa;
+      border-top: 1px solid var(--border);
+    }
+    .stat-box {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      background: #fff;
+      box-shadow: var(--shadow-sm);
+    }
+    .stat-box.p20 { border-color: var(--primary); background: var(--primary-soft); }
+    .stat-box.p30 { border-color: var(--go-border); background: var(--go-bg); }
+    .stat-box .stat-title { font-size: 0.75rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+    .stat-box .stat-main { font-size: 1.35rem; font-weight: 800; cursor: pointer; border-radius: 6px; padding: 2px 4px; margin: -2px -4px; }
+    .stat-box .stat-main:hover { background: rgba(0,0,0,.05); }
+    .stat-box.p20 .stat-main { color: var(--primary); }
+    .stat-box.p30 .stat-main { color: var(--go); }
+    .stat-box .stat-sub { font-size: 0.92rem; color: var(--muted); cursor: pointer; border-radius: 6px; padding: 2px 4px; margin: 2px -4px 0; display: inline-block; }
+    .stat-box .stat-sub:hover { background: rgba(0,0,0,.05); }
+
+    #toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%) translateY(10px);
+      background: var(--primary-dark);
+      color: #fff;
+      padding: 9px 16px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s, transform .18s;
+      box-shadow: var(--shadow-md);
+      z-index: 100;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.big {
+      font-size: 1.05rem;
+      font-weight: 800;
+      padding: 16px 30px;
+      border-radius: 12px;
+      background: var(--primary);
+      box-shadow: 0 8px 24px rgba(31, 59, 87, .4);
+    }
   </style>
 </head>
 <body>
   <main>
-    <h1>デカ重リサーチ</h1>
-    <p class="lead">Amazonの現在売価と、Keepa CSVの梱包サイズ・重量から、利益率20%の仕入上限（元）を出します。CSVの売価は使いません。Alibabaの価格も自動では使いません。</p>
     <form id="form">
       <label for="url">Amazon URL または ASIN</label>
       <input id="url" name="url" type="text" placeholder="https://www.amazon.co.jp/dp/... または B0XXXXXXXX" required />
 
-      <label for="csv">Keepa CSV（任意・梱包サイズと重量だけ使う）</label>
-      <input id="csv" name="csv" type="file" accept=".csv,text/csv" />
-      <div class="meta" id="csv-status">data/keepa に置いた CSV を選べます。売価は使いません。</div>
-
-      <div class="row">
-        <div>
-          <label for="yuan">確認済み仕入（元）任意</label>
-          <input id="yuan" name="yuan" type="number" step="0.1" placeholder="空なら上限だけ出す" />
+      <label>Keepa CSV（任意・梱包サイズと重量だけ使う）</label>
+      <div class="file-field">
+        <div class="file-btn">
+          ファイルを選択
+          <input id="csv" name="csv" type="file" accept=".csv,text/csv" />
         </div>
-        <div>
-          <label for="rate">レート（円/元）</label>
-          <input id="rate" name="rate" type="number" step="0.1" value="22" />
-        </div>
+        <span class="file-name" id="csv-status">data/keepa の最新 CSV をサーバーが自動で参照します。売価は使いません。</span>
       </div>
 
-      <details>
-        <summary>Amazonから取れないとき手入力</summary>
-        <div class="row">
-          <div>
-            <label for="price">売価（円）</label>
-            <input id="price" name="price" type="number" step="1" />
-          </div>
-          <div>
-            <label for="weight">重量（kg）</label>
-            <input id="weight" name="weight" type="number" step="0.1" />
-          </div>
-        </div>
-        <div class="row">
-          <div>
-            <label for="length">梱包 縦（cm）</label>
-            <input id="length" name="length" type="number" step="0.1" />
-          </div>
-          <div>
-            <label for="width">梱包 横（cm）</label>
-            <input id="width" name="width" type="number" step="0.1" />
-          </div>
-        </div>
-        <div class="row">
-          <div>
-            <label for="height">梱包 高（cm）</label>
-            <input id="height" name="height" type="number" step="0.1" />
-          </div>
-          <div>
-            <label for="domestic">国内送料上書き（円）</label>
-            <input id="domestic" name="domestic" type="number" step="1" />
-          </div>
-        </div>
-      </details>
-
-      <button type="submit" id="btn">計算する</button>
+      <button type="submit" id="btn" class="btn-primary">計算する</button>
     </form>
+
+    <div class="card-box registry-card" id="registry-card">
+      <h3>登録済み商品</h3>
+      <div class="registry-list" id="registry-list"><div class="registry-empty">まだ登録がありません。</div></div>
+    </div>
+
     <div class="result" id="out"></div>
   </main>
+  <div id="toast"></div>
   <script>
     let keepaMap = null;
 
     function parseKeepaCsv(text) {
-      const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).filter(l => l.length);
+      if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+      const lines = text.split(/\r?\n/).filter(l => l.length);
       if (!lines.length) return new Map();
       const rows = [];
       for (const line of lines) {
@@ -156,6 +433,7 @@
       const header = rows[0];
       const idx = name => header.indexOf(name);
       const iAsin = idx("ASIN");
+      const iParent = idx("Parent ASIN");
       const iL = idx("Package: Length (cm)");
       const iW = idx("Package: Width (cm)");
       const iH = idx("Package: Height (cm)");
@@ -173,7 +451,10 @@
         const L = num(r[iL]), W = num(r[iW]), H = num(r[iH]);
         if (asin.length !== 10 || L == null || W == null || H == null) continue;
         const g = num(r[iG]);
-        map.set(asin, { length: L, width: W, height: H, weight: g == null ? null : g / 1000 });
+        const spec = { length: L, width: W, height: H, weight: g == null ? null : g / 1000 };
+        map.set(asin, spec);
+        const parent = (r[iParent] || "").trim().toUpperCase();
+        if (parent.length === 10 && parent !== asin && !map.has(parent)) map.set(parent, spec);
       }
       return map;
     }
@@ -189,40 +470,130 @@
     document.getElementById("csv").addEventListener("change", async (e) => {
       const file = e.target.files[0];
       const status = document.getElementById("csv-status");
-      if (!file) { keepaMap = null; status.textContent = "data/keepa に置いた CSV を選べます。売価は使いません。"; return; }
+      if (!file) { keepaMap = null; status.textContent = "data/keepa の最新 CSV をサーバーが自動で参照します。売価は使いません。"; return; }
       keepaMap = parseKeepaCsv(await file.text());
-      status.textContent = `${keepaMap.size}件の梱包サイズ・重量を読みました（売価は無視）。`;
+      status.textContent = `${file.name}（${keepaMap.size}件の梱包サイズ・重量を読込。売価は無視）`;
     });
 
     const yen = v => v == null ? "—" : Math.round(v).toLocaleString("ja-JP") + "円";
     const yuan = v => v == null ? "—" : Number(v).toFixed(1) + " 元";
-    const pct = v => {
-      if (v == null) return "";
-      const ok = v >= 0.20;
-      return `<span class="${ok ? "go" : "nogo"}">${(v * 100).toFixed(1)}% ${ok ? "GO" : "NO GO"}</span>`;
-    };
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    }
+    const isHttpUrl = s => /^https?:\/\//i.test((s || "").trim());
 
-    document.getElementById("form").addEventListener("submit", async (e) => {
+    /* --- コピー用トースト --- */
+    let toastTimer = null;
+    function showToast(msg, opts) {
+      const big = opts && opts.big;
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.toggle("big", !!big);
+      t.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove("show"), big ? 2200 : 1300);
+    }
+    document.getElementById("out").addEventListener("click", (e) => {
+      const el = e.target.closest("[data-copy]");
+      if (!el) return;
+      const text = el.getAttribute("data-copy");
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(
+        () => showToast(`コピーしました: ${text}`),
+        () => showToast("コピーに失敗しました")
+      );
+    });
+
+    /* --- margin.py / shipping.py と同じ式を JS 側にも移植（編集のたびに再計算するため） --- */
+    const AMAZON_FEE_RATE = 0.165;
+    const TAX_RATE = 0.10;
+    const DUTY_RATE = 0.10;
+    const TARGET_MARGIN = 0.20;
+    const IDEAL_MARGIN = 0.30;
+    const INTL_CBM_LARGE = 17325;
+    const INTL_CBM_SMALL = 33000;
+    const WEIGHT_LIMIT_KG = 50;
+    const SAGAWA = [[60,690],[80,740],[100,920],[140,1150],[160,1400],[170,2000],[180,2500],[200,3200],[220,3800],[240,5050],[260,6500]];
+
+    function sagawaDomestic(girth, weightKg) {
+      const notes = [];
+      if (weightKg != null && weightKg > WEIGHT_LIMIT_KG) {
+        notes.push(`重量 ${weightKg}kg は佐川50kg超。分割か西濃・アート便の確認が必要。`);
+      }
+      if (girth > 260) {
+        notes.push("三辺合計260cm超。2個口・3個口に分けられないと佐川通常便は使えない。");
+        return { yen: null, band: "260cm超", notes };
+      }
+      for (const [limit, y] of SAGAWA) {
+        if (girth <= limit) return { yen: y, band: `${limit}cm枠`, notes };
+      }
+      return { yen: null, band: "未該当", notes };
+    }
+
+    function maxYuan(selling, domestic, intl, fxRate, target) {
+      if (domestic == null || !fxRate || fxRate <= 0) return null;
+      const numerator = selling * (1 - AMAZON_FEE_RATE - target) - domestic - intl;
+      const denom = fxRate * (1 + TAX_RATE + DUTY_RATE);
+      return numerator / denom;
+    }
+
+    function quoteJs(inp) {
+      const volume = (inp.length / 100) * (inp.width / 100) * (inp.height / 100);
+      const girth = inp.length + inp.width + inp.height;
+      const dom = sagawaDomestic(girth, inp.weight);
+      const domYen = dom.yen;
+      const amazonFee = inp.sellYen * AMAZON_FEE_RATE;
+      const scenarios = [];
+      for (const [label, perCbm] of [
+        ["ロット2m3超（17,325円/m3）", INTL_CBM_LARGE],
+        ["少量2m3以下（33,000円/m3）", INTL_CBM_SMALL],
+      ]) {
+        const intl = volume * perCbm;
+        const notes = [...dom.notes];
+        let yenCost = null, tax = null, duty = null, gross = null, margin = null;
+        if (inp.yuan != null) {
+          yenCost = inp.yuan * inp.rate;
+          tax = yenCost * TAX_RATE;
+          duty = yenCost * DUTY_RATE;
+          if (domYen != null) {
+            gross = inp.sellYen - yenCost - domYen - amazonFee - tax - duty - intl;
+            margin = inp.sellYen ? gross / inp.sellYen : null;
+          } else {
+            notes.push("国内送料が出せないため利益率は未計算。");
+          }
+        }
+        scenarios.push({
+          label, perCbm, yenCost, amazonFee, tax, duty, intl, domestic: domYen, gross, margin,
+          maxYuan20: maxYuan(inp.sellYen, domYen, intl, inp.rate, TARGET_MARGIN),
+          maxYuan30: maxYuan(inp.sellYen, domYen, intl, inp.rate, IDEAL_MARGIN),
+          notes,
+        });
+      }
+      return { cbm: volume, girth, domesticBand: dom.band, scenarios };
+    }
+
+    document.getElementById("form").addEventListener("submit", (e) => {
       e.preventDefault();
+      doSearch();
+    });
+
+    async function doSearch() {
       const btn = document.getElementById("btn");
       const out = document.getElementById("out");
+      const urlVal = document.getElementById("url").value;
       btn.disabled = true;
       out.style.display = "block";
       out.innerHTML = "Amazonを取得しています…";
-      const fd = new FormData(e.target);
-      const payload = {};
-      for (const [k, v] of fd.entries()) {
-        if (k === "csv") continue;
-        payload[k] = v;
-      }
-      const asin = extractAsin(payload.url || "");
+      const payload = { url: urlVal };
+      const csvFile = document.getElementById("csv").files[0];
+      if (csvFile) payload.keepa_csv = await csvFile.text();
+      const asin = extractAsin(urlVal || "");
       const spec = asin && keepaMap ? keepaMap.get(asin) : null;
-      const manualDims = payload.length && payload.width && payload.height;
-      if (spec && !manualDims) {
+      if (spec) {
         payload.keepa_length = spec.length;
         payload.keepa_width = spec.width;
         payload.keepa_height = spec.height;
-        if (spec.weight != null && !payload.weight) payload.keepa_weight = spec.weight;
+        if (spec.weight != null) payload.keepa_weight = spec.weight;
       }
       try {
         const res = await fetch("/api/research", {
@@ -231,46 +602,318 @@
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        out.innerHTML = render(data);
+        await buildResult(data, spec);
       } catch (err) {
         out.innerHTML = `<div class="err">通信エラー: ${err}</div>`;
       } finally {
         btn.disabled = false;
       }
-    });
-
-    function render(data) {
-      const bits = [];
-      if (data.fetch_error) bits.push(`<div class="warn">Amazon取得失敗: ${esc(data.fetch_error)}。下の手入力で補って再計算してください。</div>`);
-      const L = data.listing || {};
-      if (L.title) bits.push(`<h2>${esc(L.title)}</h2>`);
-      if (L.asin) bits.push(`<div class="meta">ASIN ${esc(L.asin)}</div>`);
-      const src = (data.inputs && data.inputs.package_source) || data.package_source || L.dimension_source;
-      if (src) bits.push(`<div class="meta">寸法出典: ${esc(src)}</div>`);
-      (data.notes || []).forEach(w => bits.push(`<div class="warn">${esc(w)}</div>`));
-      (L.warnings || []).forEach(w => bits.push(`<div class="warn">${esc(w)}</div>`));
-      if (data.missing && data.missing.length) {
-        bits.push(`<div class="err">不足: ${data.missing.map(esc).join("、")}。手入力欄を開いて入れてください。</div>`);
-        return bits.join("");
-      }
-      const q = data.quote;
-      const inp = data.inputs;
-      bits.push(`<p>売価 ${yen(inp.selling_yen)} ／ ${inp.length_cm}×${inp.width_cm}×${inp.height_cm}cm ／ 三辺 ${Math.round(q.girth_cm)}cm（${esc(q.domestic_band)}） ／ ${q.cbm.toFixed(4)} m3</p>`);
-      for (const s of q.scenarios) {
-        bits.push(`<div class="card">
-          <div class="meta">${esc(s.label)}</div>
-          <div>バイヤーへ渡す上限（利益率20%）</div>
-          <div class="big">${yuan(s.max_yuan_20)}</div>
-          <div class="meta">30%なら ${yuan(s.max_yuan_30)} ／ 国内 ${yen(s.domestic)} ／ 国際 ${yen(s.intl)} ／ 手数料 ${yen(s.amazon_fee)}</div>
-          ${s.margin != null ? `<div style="margin-top:8px">この仕入の粗利 ${yen(s.gross)} ／ 利益率 ${pct(s.margin)}</div>` : `<div class="meta" style="margin-top:8px">仕入（元）を入れると利益率が出ます</div>`}
-          ${(s.notes || []).map(n => `<div class="warn">${esc(n)}</div>`).join("")}
-        </div>`);
-      }
-      bits.push(`<p class="meta">同価格前提。Alibabaの表示価格は使わず、上の上限元をバイヤーに確認してください。</p>`);
-      return bits.join("");
     }
-    function esc(s) {
-      return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+    async function loadSaved(asin) {
+      try {
+        const res = await fetch(`/api/item?asin=${encodeURIComponent(asin)}`);
+        const data = await res.json();
+        return data && Object.keys(data).length ? data : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function timeAgo(ts) {
+      if (!ts) return "";
+      const diff = Date.now() / 1000 - ts;
+      if (diff < 3600) return `${Math.max(1, Math.round(diff / 60))}分前`;
+      if (diff < 86400) return `${Math.round(diff / 3600)}時間前`;
+      return `${Math.round(diff / 86400)}日前`;
+    }
+
+    async function refreshRegistry() {
+      const box = document.getElementById("registry-list");
+      try {
+        const res = await fetch("/api/items");
+        const items = await res.json();
+        if (!items.length) {
+          box.innerHTML = `<div class="registry-empty">まだ登録がありません。</div>`;
+          return;
+        }
+        box.innerHTML = items.map(it => `
+          <div class="registry-item" data-url="${esc(it.url || ('https://www.amazon.co.jp/dp/' + it.asin))}">
+            <div class="ri-photo">${it.image_url ? `<img src="${esc(it.image_url)}" alt="" />` : ""}</div>
+            <div class="ri-title">${esc(it.title || it.asin)}</div>
+            <div class="ri-meta">${it.sell != null ? Math.round(it.sell).toLocaleString("ja-JP") + "円" : ""}${it.yuan != null ? " ／ " + Number(it.yuan).toFixed(1) + "元" : ""} ・ ${timeAgo(it.updated)}</div>
+          </div>
+        `).join("");
+        box.querySelectorAll(".registry-item").forEach(el => {
+          el.addEventListener("click", () => {
+            document.getElementById("url").value = el.getAttribute("data-url");
+            doSearch();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          });
+        });
+      } catch (e) { /* ignore */ }
+    }
+    refreshRegistry();
+
+    async function buildResult(data, clientSpec) {
+      const out = document.getElementById("out");
+      const bits = [];
+      if (data.fetch_error) bits.push(`<div class="warn">Amazon取得失敗: ${esc(data.fetch_error)}。下の欄に手入力してください。</div>`);
+      const L = data.listing || {};
+      const kc = data.keepa_csv;
+      if (kc) {
+        if (kc.row_count > 0) {
+          const where = kc.path ? esc(kc.path) : (kc.uploaded ? "アップロード CSV" : "Keepa CSV");
+          bits.push(`<div class="meta">Keepa CSV: ${kc.row_count}件（${where}）</div>`);
+        } else if (!kc.uploaded) {
+          bits.push(`<div class="warn">Keepa CSV 未読込。data/keepa/ に置くか、ファイルを選択してください。</div>`);
+        }
+      }
+      (data.notes || []).forEach(w => bits.push(`<div class="warn">${esc(w)}</div>`));
+      if (data.missing && data.missing.length) {
+        bits.push(`<div class="warn">不足: ${data.missing.map(esc).join("、")}。下の欄に手入力すると再計算されます。</div>`);
+      }
+
+      const inp = data.inputs || {};
+      const asin = data.asin || L.asin || extractAsin(document.getElementById("url").value) || null;
+      const saved = asin ? await loadSaved(asin) : null;
+
+      const rival = inp.selling_yen != null ? inp.selling_yen : (L.price_yen != null ? L.price_yen : null);
+      const defaultSell = rival != null ? Math.round(rival * 0.8) : null;
+      const fallbackLen = inp.length_cm != null ? inp.length_cm : (L.length_cm != null ? L.length_cm : (clientSpec ? clientSpec.length : null));
+      const fallbackWid = inp.width_cm != null ? inp.width_cm : (L.width_cm != null ? L.width_cm : (clientSpec ? clientSpec.width : null));
+      const fallbackHei = inp.height_cm != null ? inp.height_cm : (L.height_cm != null ? L.height_cm : (clientSpec ? clientSpec.height : null));
+      const fallbackWeight = inp.weight_kg != null ? inp.weight_kg : (L.weight_kg != null ? L.weight_kg : (clientSpec ? clientSpec.weight : null));
+
+      const v = {
+        sell: saved && saved.sell != null ? saved.sell : defaultSell,
+        length: saved && saved.length != null ? saved.length : fallbackLen,
+        width: saved && saved.width != null ? saved.width : fallbackWid,
+        height: saved && saved.height != null ? saved.height : fallbackHei,
+        weight: saved && saved.weight != null ? saved.weight : fallbackWeight,
+        yuan: saved && saved.yuan != null ? saved.yuan : (inp.yuan != null ? inp.yuan : null),
+        rate: saved && saved.rate != null ? saved.rate : 22,
+        supplierUrls: saved && Array.isArray(saved.supplierUrls) ? saved.supplierUrls : [],
+        comment: saved && saved.comment ? saved.comment : "",
+      };
+
+      const titleLine = [];
+      if (L.title) titleLine.push(esc(L.title));
+      if (L.asin) titleLine.push(`<span class="meta">ASIN ${esc(L.asin)}</span>`);
+      if (L.url) titleLine.push(`<a href="${esc(L.url)}" target="_blank" rel="noopener">サイト</a>`);
+      const src = inp.package_source || L.dimension_source;
+
+      const imgName = asin ? `${asin}.jpg` : "product.jpg";
+
+      bits.push(`
+        ${titleLine.length ? `<div class="sheet-title">${titleLine.join(" ／ ")}<span class="save-status" id="save-status">✓ 保存しました</span></div>` : ""}
+        ${src ? `<div class="meta" style="margin-bottom:8px">寸法出典: ${esc(src)}</div>` : ""}
+        <div class="top-panel">
+          <a class="photo-box" id="photo-box" href="${L.image_url ? esc(L.image_url) : "#"}" download="${esc(imgName)}" target="_blank" rel="noopener">
+            ${L.image_url ? `<img src="${esc(L.image_url)}" alt="商品画像" />` : "写真なし"}
+            ${L.image_url ? `<span class="photo-hint">クリックで画像を保存</span>` : ""}
+          </a>
+          <div class="edit-grid">
+            <div class="edit-cell readonly"><div class="lbl">ライバル販売価格(円)</div><input id="eq-rival" type="number" step="1" value="${rival != null ? rival : ""}" /></div>
+            <div class="edit-cell"><div class="lbl">販売価格 自社(円) ×0.8</div><input id="eq-sell" type="number" step="1" value="${v.sell != null ? v.sell : ""}" /></div>
+            <div class="edit-cell"><div class="lbl">梱包 縦(cm)</div><input id="eq-length" type="number" step="0.1" value="${v.length != null ? v.length : ""}" /></div>
+            <div class="edit-cell"><div class="lbl">梱包 横(cm)</div><input id="eq-width" type="number" step="0.1" value="${v.width != null ? v.width : ""}" /></div>
+            <div class="edit-cell"><div class="lbl">梱包 高(cm)</div><input id="eq-height" type="number" step="0.1" value="${v.height != null ? v.height : ""}" /></div>
+            <div class="edit-cell"><div class="lbl">重量(kg)</div><input id="eq-weight" type="number" step="0.1" value="${v.weight != null ? v.weight : ""}" /></div>
+            <div class="edit-cell"><div class="lbl">仕入原価(元)</div><input id="eq-yuan" type="number" step="0.1" value="${v.yuan != null ? v.yuan : ""}" /></div>
+            <div class="edit-cell"><div class="lbl">レート(円/元)</div><input id="eq-rate" type="number" step="0.1" value="${v.rate}" /></div>
+          </div>
+        </div>
+        <div class="action-row">
+          <button type="button" class="btn-register" id="eq-register">登録する</button>
+          <button type="button" class="btn-outline" id="eq-reset80">自社価格をライバル×0.8に戻す</button>
+        </div>
+
+        <div class="section">
+          <h3>仕入れ先候補URL（Alibaba / 1688 など）</h3>
+          <div class="url-rows" id="supplier-rows"></div>
+          <button type="button" class="btn-outline" id="supplier-add" style="margin-top:10px">＋ URLを追加</button>
+        </div>
+
+        <div id="calc-out"></div>
+
+        <div class="section">
+          <h3>コメント・メモ</h3>
+          <textarea id="eq-comment" rows="3" placeholder="交渉メモ、注意点など">${esc(v.comment)}</textarea>
+        </div>
+      `);
+      out.innerHTML = bits.join("");
+
+      let saveTimer = null;
+      const flashSaved = () => {
+        const el = document.getElementById("save-status");
+        if (!el) return;
+        el.classList.add("show");
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => el.classList.remove("show"), 1200);
+      };
+      let saveDebounce = null;
+      const doSave = async () => {
+        const num = id => {
+          const val = document.getElementById(id).value;
+          return val === "" ? null : Number(val);
+        };
+        const supplierUrls = Array.from(document.querySelectorAll(".supplier-input"))
+          .map(i => i.value.trim())
+          .filter(Boolean);
+        const state = {
+          asin,
+          url: L.url || null,
+          title: L.title || null,
+          image_url: L.image_url || null,
+          sell: num("eq-sell"),
+          length: num("eq-length"),
+          width: num("eq-width"),
+          height: num("eq-height"),
+          weight: num("eq-weight"),
+          yuan: num("eq-yuan"),
+          rate: num("eq-rate"),
+          supplierUrls,
+          comment: document.getElementById("eq-comment").value,
+        };
+        try {
+          await fetch("/api/item", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(state),
+          });
+          flashSaved();
+          refreshRegistry();
+        } catch (e) { /* ignore */ }
+      };
+      const saveState = () => {
+        if (!asin) return;
+        clearTimeout(saveDebounce);
+        saveDebounce = setTimeout(doSave, 400);
+      };
+      document.getElementById("eq-register").addEventListener("click", async () => {
+        if (!asin) return;
+        clearTimeout(saveDebounce);
+        await doSave();
+        showToast("✓ 登録しました", { big: true });
+      });
+
+      function addSupplierRow(url) {
+        const container = document.getElementById("supplier-rows");
+        const row = document.createElement("div");
+        row.className = "url-row";
+        const input = document.createElement("input");
+        input.type = "url";
+        input.className = "supplier-input";
+        input.placeholder = "https://www.alibaba.com/... または https://detail.1688.com/...";
+        input.value = url || "";
+        const link = document.createElement("a");
+        link.className = "url-open";
+        link.textContent = "開く";
+        link.target = "_blank";
+        link.rel = "noopener";
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.className = "url-remove";
+        removeBtn.textContent = "×";
+        const syncLink = () => {
+          const val = input.value.trim();
+          if (isHttpUrl(val)) { link.href = val; link.style.visibility = "visible"; }
+          else { link.removeAttribute("href"); link.style.visibility = "hidden"; }
+        };
+        input.addEventListener("input", () => { syncLink(); saveState(); });
+        removeBtn.addEventListener("click", () => { row.remove(); saveState(); });
+        row.appendChild(input);
+        row.appendChild(link);
+        row.appendChild(removeBtn);
+        container.appendChild(row);
+        syncLink();
+      }
+
+      if (v.supplierUrls.length) {
+        v.supplierUrls.forEach(u => addSupplierRow(u));
+      } else {
+        addSupplierRow("");
+      }
+      document.getElementById("supplier-add").addEventListener("click", () => addSupplierRow(""));
+
+      const ids = ["eq-rival", "eq-sell", "eq-length", "eq-width", "eq-height", "eq-weight", "eq-yuan", "eq-rate"];
+      const recompute = () => {
+        const num = id => {
+          const val = document.getElementById(id).value;
+          return val === "" ? null : Number(val);
+        };
+        const state = {
+          sellYen: num("eq-sell") || 0,
+          length: num("eq-length") || 0,
+          width: num("eq-width") || 0,
+          height: num("eq-height") || 0,
+          weight: num("eq-weight"),
+          yuan: num("eq-yuan"),
+          rate: num("eq-rate") || 22,
+        };
+        const q = quoteJs(state);
+        renderCalc(q, state);
+        saveState();
+      };
+      ids.forEach(id => document.getElementById(id).addEventListener("input", recompute));
+      document.getElementById("eq-reset80").addEventListener("click", () => {
+        const rivalVal = Number(document.getElementById("eq-rival").value);
+        if (rivalVal) document.getElementById("eq-sell").value = Math.round(rivalVal * 0.8);
+        recompute();
+      });
+      document.getElementById("eq-comment").addEventListener("input", saveState);
+
+      recompute();
+    }
+
+    function renderCalc(q, state) {
+      const box = document.getElementById("calc-out");
+      const parts = [];
+      for (const s of q.scenarios) {
+        const ok = s.margin != null && s.margin >= TARGET_MARGIN;
+        const marginCls = s.margin == null ? "" : (ok ? "go" : "nogo");
+        const cells = [
+          ["国内送料帯", esc(q.domesticBand)],
+          ["三辺合計(cm)", Math.round(q.girth) + "cm"],
+          ["CBM(体積)", q.cbm.toFixed(4)],
+          ["円の商品原価", yen(s.yenCost)],
+          ["国内送料", yen(s.domestic)],
+          ["Amazon手数料", yen(s.amazonFee)],
+          ["消費税", yen(s.tax)],
+          ["関税", yen(s.duty)],
+          ["1CBM単価", s.perCbm.toLocaleString("ja-JP") + "円"],
+          ["国際運送", yen(s.intl)],
+          ["粗利", yen(s.gross)],
+        ];
+        const cellsHtml = cells.map(([l, val]) =>
+          `<div class="cell" data-copy="${esc(val)}"><div class="lbl">${l}</div><div class="val">${val}</div></div>`
+        ).join("");
+        const pctText = s.margin == null ? "—" : `${(s.margin * 100).toFixed(1)}% ${ok ? "GO" : "NO GO"}`;
+        parts.push(`
+          <div class="scenario-block">
+            <div class="scenario-title">${esc(s.label)}</div>
+            <div class="sheet-grid">
+              ${cellsHtml}
+              <div class="cell margin-cell ${marginCls}" data-copy="${esc(pctText)}"><div class="lbl">利益率</div><div class="val">${pctText}</div></div>
+            </div>
+            <div class="stat-row">
+              <div class="stat-box p20">
+                <div class="stat-title">仕入上限（利益率20%）</div>
+                <div class="stat-main" data-copy="${esc(yuan(s.maxYuan20))}">${yuan(s.maxYuan20)}</div>
+                <div class="stat-sub" data-copy="${esc(yen(s.maxYuan20 != null ? s.maxYuan20 * state.rate : null))}">${yen(s.maxYuan20 != null ? s.maxYuan20 * state.rate : null)}</div>
+              </div>
+              <div class="stat-box p30">
+                <div class="stat-title">仕入上限（利益率30%）</div>
+                <div class="stat-main" data-copy="${esc(yuan(s.maxYuan30))}">${yuan(s.maxYuan30)}</div>
+                <div class="stat-sub" data-copy="${esc(yen(s.maxYuan30 != null ? s.maxYuan30 * state.rate : null))}">${yen(s.maxYuan30 != null ? s.maxYuan30 * state.rate : null)}</div>
+              </div>
+            </div>
+            ${(s.notes || []).map(n => `<div class="warn">${esc(n)}</div>`).join("")}
+          </div>
+        `);
+      }
+      box.innerHTML = parts.join("");
     }
   </script>
 </body>

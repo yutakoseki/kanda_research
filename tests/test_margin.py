@@ -111,6 +111,51 @@ class KeepaCsvTest(unittest.TestCase):
         self.assertIn("売価", no_price["missing"])
         self.assertEqual(no_price["package_source"], "Keepa CSV 梱包サイズ")
 
+    def test_product_finder_export(self):
+        from pathlib import Path
+
+        from deca.keepa_csv import load_keepa_csv
+        from deca.service import research
+
+        path = Path(__file__).parent / "keepa_product_finder.csv"
+        specs = load_keepa_csv(path)
+        self.assertIn("B09VB1Q4KB", specs)
+        self.assertIn("B0H6MPN82D", specs)
+        spec = specs["B09VB1Q4KB"]
+        self.assertEqual(spec.length_cm, 43.4)
+        self.assertEqual(spec.width_cm, 29.8)
+        self.assertEqual(spec.height_cm, 27.7)
+        self.assertAlmostEqual(spec.weight_kg, 10.56)
+
+        r = research("B09VB1Q4KB", price=5447, csv_path=path, fetch=False)
+        self.assertEqual(r["package_source"], "Keepa CSV 梱包サイズ")
+        self.assertEqual(r["inputs"]["length_cm"], 43.4)
+
+        parent = research("B0H6MPN82D", price=5447, csv_path=path, fetch=False)
+        self.assertEqual(parent["package_source"], "Keepa CSV 梱包サイズ")
+        self.assertEqual(parent["inputs"]["weight_kg"], 10.56)
+
+    def test_uploaded_csv_text(self):
+        from pathlib import Path
+
+        from deca.keepa_csv import load_keepa_csv_text
+        from deca.service import research
+
+        path = Path(__file__).parent / "hasegawa.csv"
+        text = path.read_text(encoding="utf-8")
+        specs = load_keepa_csv_text(text)
+        self.assertIn("B0857JFR8Y", specs)
+        self.assertEqual(specs["B0857JFR8Y"].length_cm, 125)
+
+        r = research("B0857JFR8Y", price=18382, keepa_csv_text=text, fetch=False)
+        self.assertEqual(r["package_source"], "Keepa CSV 梱包サイズ")
+        self.assertEqual(r["inputs"]["length_cm"], 125)
+        self.assertTrue(r["keepa_csv"]["uploaded"])
+
+        missing_csv = research("B0857JFR8Y", price=18382, fetch=False)
+        self.assertIn("梱包の縦・横・高", missing_csv["missing"])
+        self.assertEqual(missing_csv["keepa_csv"]["row_count"], 0)
+
 
 class AsinParseTest(unittest.TestCase):
     def test_extract(self):
