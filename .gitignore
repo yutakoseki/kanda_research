@@ -5,6 +5,5 @@ __pycache__/
 *.html
 !deca/static/index.html
 KeepaExport*.csv
-data/keepa/*.csv
 data/research/*.json
 deca/data/
